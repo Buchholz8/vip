@@ -7,10 +7,7 @@ app = Flask(__name__)
 ## user handlers
 @app.post("/api/user")
 def post_user():
-    error = dbhelpers.check_endpoint_info(
-        request.json,
-        ["username", "email", "password", "profile_img", "banner_img", "description"],
-    )
+    error = dbhelpers.check_endpoint_info(request.json, ["username", "email","password","profile_img","banner_img","description"])
     if error != None:
         return make_response(jsonify(error), 500)
     results = dbhelpers.run_procedures(
@@ -196,15 +193,18 @@ def group_members_get():
         return make_response(jsonify(error), 500)
     results = dbhelpers.run_procedures("CALL group_member(?)", [group_id])
     if (type(results) == list) and len(results) > 0:
-        row = results[0]
-        response = {
-            "name": row[0],
-            "profile_picture": row[1],
-        }
+        response = []
+        for row in results:
+            member = {
+                "name": row[0],
+                "profile_picture": row[1],
+            }
+            response.append(member)
         return make_response(jsonify(response), 200)
     else:
         error = {"error": "No data found"}
         return make_response(jsonify(error), 500)
+
 
 
 ##message handlers
@@ -221,7 +221,7 @@ def return_messages():
         return make_response(jsonify(error), 500)
     results = dbhelpers.run_procedures("CALL messages_get(?)", [group_id])
     if isinstance(results, list) and len(results) > 0:
-        response = [{"content": row[0], "created_at": row[1]} for row in results]
+        response = [{"content": row[0], "created_at": row[1], "username" : row[2]} for row in results]
         return make_response(jsonify(response), 200)
     else:
         return make_response(jsonify("No messages found for the given group_id"), 200)
@@ -247,6 +247,18 @@ def message_post():
     else:
         return make_response(jsonify("Sorry, an error occurred"), 500)
 
+## friend handlers
+
+@app.post('/api/friends')
+def add_frind() :
+    error = dbhelpers.check_endpoint_info(request.json ,["username" , "user_id"])
+    if error is not None :
+        return make_response(jsonify(error) , 500)
+    results = dbhelpers.run_procedures("CALL add_friends_post(?,?)" , [request.json.get("username") , request.json.get("user_id")])
+    if (type(results) == list) :
+        return make_response(jsonify(results) , 200)
+    else:
+        return make_response(jsonify('an error occured while adding friend'))
 
 if dbcreds.production_mode == True:
     print("Running in production mode")
