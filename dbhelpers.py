@@ -9,12 +9,12 @@ def run_procedures(sql, args):
         cursor = conn.cursor()
         cursor.execute(sql, args)
         results = cursor.fetchall()
-    except mariadb.IntegrityError:
-        print("Sorry, what you entered doesn't exist")
-    except mariadb.OperationalError:
-        print('there is an error in the data base')
-    except mariadb.ProgrammingError:
-        print('Error in the sql syntax or query execution')
+    except mariadb.IntegrityError as error:
+        print('Error:', error)
+    except mariadb.OperationalError as error:
+        print('Error:', error)
+    except mariadb.ProgrammingError as error:
+        print('Error:', error)
     except Exception as error:
         print('Error:', error)
     finally:
