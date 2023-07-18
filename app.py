@@ -251,10 +251,10 @@ def message_post():
 
 @app.post('/api/friends')
 def add_frind() :
-    error = dbhelpers.check_endpoint_info(request.json ,["username" , "user_id"])
+    error = dbhelpers.check_endpoint_info(request.json ,["user_id" , "username"])
     if error is not None :
         return make_response(jsonify(error) , 500)
-    results = dbhelpers.run_procedures("CALL add_friends_post(?,?)" , [request.json.get("username") , request.json.get("user_id")])
+    results = dbhelpers.run_procedures("CALL add_friends_post(?,?)" , [request.json.get("user_id") , request.json.get("username")])
     if (type(results) == list) :
         return make_response(jsonify(results) , 200)
     else:
@@ -281,20 +281,21 @@ def delete_friends():
     user_id = request.args.get("user_id")
     if not user_id:
         error = {"error": "user_id"}
-        return make_response(jsonify(error), 500)
+        return make_response(jsonify(error), 400)
     friend_id = request.args.get("friend_id")
     if not friend_id:
         error = {"error": "friend_id"}
-        return make_response(jsonify(error), 500)
-    error = dbhelpers.check_endpoint_info(request.args, [ "user_id" , "friend_id"])
+        return make_response(jsonify(error), 400)
+    error = dbhelpers.check_endpoint_info(request.args, ["user_id", "friend_id"])
     if error is not None:
-        return make_response(jsonify(error), 500)
-    results = dbhelpers.run_procedures("CALL add_friends_delete(? , ?)", [user_id , friend_id])
-    if isinstance(results, list) and len(results) > 0:
-        response = [{"username": row[0], "profile_img": row[1], "created_at" : row[2]} for row in results]
-        return make_response(jsonify(response), 200)
+        return make_response(jsonify(error), 400)
+
+    success = dbhelpers.run_procedures("CALL remove_friends(?, ?)", [user_id, friend_id])
+
+    if success:
+        return make_response("", 204)
     else:
-        return make_response(jsonify("Friend does not exist"), 200)
+        return make_response("", 404)
 
 
 
