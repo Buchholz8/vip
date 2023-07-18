@@ -266,19 +266,35 @@ def return_friends():
     if not user_id:
         error = {"error": "user_id"}
         return make_response(jsonify(error), 500)
+    error = dbhelpers.check_endpoint_info(request.args, ["user_id"])
+    if error is not None:
+        return make_response(jsonify(error), 500)
+    results = dbhelpers.run_procedures("CALL friend_get(?)", [user_id])
+    if isinstance(results, list) and len(results) > 0:
+        response = [{"friend_id" : row[0] , "username": row[1], "profile_img": row[2], "created_at" : row[3]} for row in results]
+        return make_response(jsonify(response), 200)
+    else:
+        return make_response(jsonify("No messages found for the given group_id"), 200)
+    
+@app.delete("/api/friends")
+def delete_friends():
+    user_id = request.args.get("user_id")
+    if not user_id:
+        error = {"error": "user_id"}
+        return make_response(jsonify(error), 500)
     friend_id = request.args.get("friend_id")
     if not friend_id:
         error = {"error": "friend_id"}
         return make_response(jsonify(error), 500)
-    error = dbhelpers.check_endpoint_info(request.args, ["user_id" , "friend_id"])
+    error = dbhelpers.check_endpoint_info(request.args, [ "user_id" , "friend_id"])
     if error is not None:
         return make_response(jsonify(error), 500)
-    results = dbhelpers.run_procedures("CALL friend_get(? , ?)", [user_id, friend_id])
+    results = dbhelpers.run_procedures("CALL add_friends_delete(? , ?)", [user_id , friend_id])
     if isinstance(results, list) and len(results) > 0:
         response = [{"username": row[0], "profile_img": row[1], "created_at" : row[2]} for row in results]
         return make_response(jsonify(response), 200)
     else:
-        return make_response(jsonify("No messages found for the given group_id"), 200)
+        return make_response(jsonify("Friend does not exist"), 200)
 
 
 
