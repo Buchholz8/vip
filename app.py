@@ -259,6 +259,28 @@ def add_frind() :
         return make_response(jsonify(results) , 200)
     else:
         return make_response(jsonify('an error occured while adding friend'))
+    
+@app.get("/api/friends")
+def return_friends():
+    user_id = request.args.get("user_id")
+    if not user_id:
+        error = {"error": "user_id"}
+        return make_response(jsonify(error), 500)
+    friend_id = request.args.get("friend_id")
+    if not friend_id:
+        error = {"error": "friend_id"}
+        return make_response(jsonify(error), 500)
+    error = dbhelpers.check_endpoint_info(request.args, ["user_id" , "friend_id"])
+    if error is not None:
+        return make_response(jsonify(error), 500)
+    results = dbhelpers.run_procedures("CALL friend_get(? , ?)", [user_id, friend_id])
+    if isinstance(results, list) and len(results) > 0:
+        response = [{"username": row[0], "profile_img": row[1], "created_at" : row[2]} for row in results]
+        return make_response(jsonify(response), 200)
+    else:
+        return make_response(jsonify("No messages found for the given group_id"), 200)
+
+
 
 if dbcreds.production_mode == True:
     print("Running in production mode")
